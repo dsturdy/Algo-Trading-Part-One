@@ -1,0 +1,130 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+import pandas_datareader as web
+import datetime
+import pandas_datareader.data as web
+
+
+# parameters are year, month, day (then hour, minute, etc)
+start = datetime.datetime(2012, 1, 1)
+end = datetime.datetime(2017, 1, 1)
+
+# We need these global variables for anything to work btw
+tesla = web.DataReader('TSLA', 'yahoo', start, end)
+ford = web.DataReader('F', 'yahoo', start, end)
+gm = web.DataReader('GM', 'yahoo', start, end)
+def get_menu_choice():
+    choice = 0
+    while choice > 7 or choice < 1:
+        print('Your choices are:')
+        print('1 - getting numeric stock data')
+        print('2 - other method to get numeric stock data')
+        print('3 - plotting opening prices')
+        print('4 - plotting volume')
+        print('5 - plotting market cap')
+        print('7 - quit')
+
+        try:
+            choice = int(input('Your choice? '))
+
+        except ValueError:
+            print('only integer input accepted')
+
+    return choice
+
+def main():
+    loop = True
+    while loop:
+            choice = get_menu_choice()
+            if choice == 1:
+                getting_numeric_data()
+            elif choice == 2:
+                getting_numeric_datav2()
+            elif choice == 3:
+                plotting_opening_prices()
+            elif choice == 4:
+                plotting_volume()
+            elif choice == 5:
+                market_cap()
+            elif choice == 6:
+                loop = False
+
+
+
+
+def getting_numeric_data():
+    tesla = web.DataReader('TSLA', 'yahoo', start, end)
+    print(tesla.head())
+
+    # Now grab data from ford and general motors
+
+    ford = web.DataReader('F', 'yahoo', start, end)
+    gm = web.DataReader('GM', 'yahoo', start, end)
+    print(ford.head())
+    print(gm.head())
+
+def getting_numeric_datav2():
+
+    # Or could do this...
+
+    symbols = ['F', 'GM']
+    frames = [web.DataReader(i, 'yahoo').assign(Symbol=i, Date=lambda x: x.index)
+              for i in symbols]
+    dfStocks = pd.concat(frames)
+    print(dfStocks.head())
+    print(dfStocks.tail())
+
+    # Now to actually look at some graphs
+
+def plotting_opening_prices():
+    tesla['Open'].plot(label='Tesla', figsize=(16, 8), title='Opening Prices')
+    # If you set the parameters for the first one then the following ones will follow said parameters
+    # so we only needed to change their labels to distinguish them from eachother
+    gm['Open'].plot(label='GM')
+    ford['Open'].plot(label='Ford')
+    plt.legend()
+    plt.show()
+
+    # Now plot the volume of stock traded each day...
+    # should we pretty easy
+
+
+
+def plotting_volume():
+    tesla['Volume'].plot(label='Tesla', figsize=(16, 8), title='Volume Traded')
+
+    gm['Volume'].plot(label='GM')
+    ford['Volume'].plot(label='Ford')
+    plt.legend()
+    plt.show()
+
+    # on the top right you see e8 or whatever it means number on y-axis multiplied by 10^8
+
+    # It's kinda hard to tell what ford's volume traded was at their peak so we can do...
+    print(ford['Volume'].max())
+    # And now to find the date of their peak volume traded...
+    print(ford['Volume'].idxmax())
+    # and if we use argmax it'll tell us the index of their peak, (so i think each day is an index so it's 493 days away from the first date(bc first date is 0) )
+    print(ford['Volume'].argmax())
+
+def market_cap():
+    # We dont have a column for market cap but we can instead find it by...
+
+    # multiplying price(opening price) times volume
+
+    # part one
+    tesla['Market Cap Traded'] = tesla['Open'] * tesla['Volume']
+    ford['Market Cap Traded'] = ford['Open'] * ford['Volume']
+    gm['Market Cap Traded'] = gm['Open'] * gm['Volume']
+
+    # part two
+    tesla['Market Cap Traded'].plot(label='Tesla', figsize=(16, 8))
+    ford['Market Cap Traded'].plot(label='ford')
+    gm['Market Cap Traded'].plot(label='gm')
+    plt.legend()
+    plt.show()
+
+main()
+
